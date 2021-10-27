@@ -1,0 +1,36 @@
+version: '3.3'
+
+services:
+  # Based in https://stackoverflow.com/questions/55779979/how-to-run-golang-migrate-with-docker-compose/55779980
+  steelman_db:
+    image: postgres:13
+    networks:
+      database_net:
+        aliases:
+          - database_host
+    environment:
+      POSTGRES_DB: steelman_db
+      POSTGRES_USER: steelman
+      POSTGRES_PASSWORD: steelman
+    ports:
+      - "5432"
+    healthcheck:
+      test: pg_isready -U steelman -d steelman_db
+      interval: 10s
+      timeout: 30s
+      retries: 5
+
+  migrate:
+    image: migrate/migrate
+    networks:
+      - database_net
+    volumes:
+      - ./db/migrations:/migrations
+    command: ["-path", "/migrations", "-database", "postgres://steelman:steelman@database_host:5432/steelman_db?sslmode=disable", "up"]
+    restart: "on-failure"
+    depends_on:
+      - steelman_db
+    links: 
+      - steelman_db
+networks:
+  database_net:
