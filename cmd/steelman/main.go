@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
+	"github.com/sirupsen/logrus"
+	"github.com/tul1/STEELMAN/steelman/internal/infrastructure"
 )
 
 type SportJSON struct {
@@ -22,13 +22,18 @@ var sports = []SportJSON{
 }
 
 func main() {
-	dsn := "host=172.27.0.2 user=steelman password=steelman dbname=steelman_db port=5432 sslmode=disable"
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	logger := logrus.New()
+	dsn := "host=172.28.0.2 user=steelman password=steelman dbname=steelman_db port=5432 sslmode=disable"
+	ormConnector, err := infrastructure.NewPostgreSQL(dsn, logger)
 	if err != nil {
-		panic("failed to connect database")
+		return
 	}
 
-	db.Create(&Sport{SportName: "bowling"})
+	err = ormConnector.Conn().Create(&Sports{SportName: "tennis"}).Error
+	if err != nil {
+		logger.Error(err)
+		return
+	}
 
 	router := gin.Default()
 	router.GET("/sport", getSports)
@@ -42,7 +47,7 @@ func getSports(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, sports)
 }
 
-type Sport struct {
+type Sports struct {
 	ID        string `gorm:"default:uuid_generate_v4()"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
