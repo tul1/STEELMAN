@@ -1,1 +1,1 @@
-DROP TABLE IF EXISTS user, sport, challenge, activity;
+DROP TABLE IF EXISTS users, sports, challenges, activities;
